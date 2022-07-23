@@ -14,7 +14,7 @@
 	CERTmode=EXT \
 	CERTstore="~/Documents/certs store" \
 	CERTpwd="Z_s_*u3fZbCuC2P2XDZ_" \
-	CERTfqdn="portal.cloudinside.net"
+	CERTfqdn="mail.cloudinside.net"
 
 ./certgen.sh \
 	CERTmode=SELF \

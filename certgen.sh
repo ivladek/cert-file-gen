@@ -5,6 +5,9 @@
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
 
+KEYlen=4096
+CERTdays=5000
+
 CERTparams1=(
 	CERTmode
 	CERTstore
@@ -19,7 +22,7 @@ CERTparams2=(
 	CERTservice
 )
 
-CSRfields=(
+CERTfields=(
 	"Subject:"
 	"Not Before"
 	"Not After"
@@ -49,8 +52,8 @@ EXITcodes=(
 	"[08] certificate request must not exists for EXT mode"
 	"[09] password does not defined for EXT mode"
 	"[10] unknown mode"
+	"[11] certificate directory must be empty"
 )
-
 
 RUNpath=$(pwd)
 ParamMaxLen=0
@@ -60,7 +63,7 @@ for param in ${CERTparams1[@]} ${CERTparams2[@]}; do (( ${#param} > $ParamMaxLen
 gen_FILEcfg () {
 echo "
 [ req ]
-default_bits = 2048
+default_bits = $KEYlen
 default_keyfile = private.key
 distinguished_name = req_distinguished_name
 prompt = no
@@ -83,13 +86,14 @@ commonName = $CERTfqdn
 }
 
 show_FILE () {
-	echo -e "\n\033[4m\"$1\"\033[0m"
+	echo -e "\n\033[2m\033[4m$1\033[0m\033[2m"
 	cat "$1"
-	printf '^%.0s' {1..75}; printf "\n"
+	printf "^%.0s" {1..64}
+	echo -e "\033[0m\n"
 }
 
 exit_script() {
-	echo -e "\nusage: $0 [parameters]"
+	echo -e "\nusage: $(cd $(dirname "$0"); pwd; cd "$RUNpath")/$(basename "$0") [parameters]"
 	echo -e "parameters:"
 	for param in ${CERTparams1[@]} ${CERTparams2[@]}; do printf "\t%-${ParamMaxLen}s = \033[2m\"%-s\"\033[0m\n" "$param" "${!param}"; done
 	echo -e "CERTmode:"
@@ -130,11 +134,9 @@ echo -e "\033[2mok\033[0m"
 
 CERTmode=$(echo $CERTmode | tr '[:lower:]' '[:upper:]')
 echo -e "\n\033[4mScript mode is $CERTmode\033[0m"
-if [[ "$CERTmode" == "CSR" ]];    then echo -e "\t\033[2mprepare request, send to external CA and generate all files\033[0m"
-elif [[ "$CERTmode" == "EXT" ]];  then echo -e "\t\033[2mall data receiving from external service in text format, usual via email\033[0m"
-elif [[ "$CERTmode" == "SELF" ]]; then echo -e "\t\033[2mself signed from provided data\033[0m"
-	echo "SORRY. To be implemented"
-	exit_script 10
+if [[ "$CERTmode" == "CSR" ]];    then echo -e "\033[2mprepare request, send to external CA and generate all files\033[0m"
+elif [[ "$CERTmode" == "EXT" ]];  then echo -e "\033[2mall data receiving from external service in text format, usual via email\033[0m"
+elif [[ "$CERTmode" == "SELF" ]]; then echo -e "\033[2mself signed from provided data\033[0m"
 else exit_script 10; fi
 
 
@@ -156,8 +158,13 @@ then
 	if [[ -z $CERTpwd ]]; then exit_script 9; fi
 	echo -e "\t\033[2mpassword saving to \"$CERTbase.enc\"\033[0m"
 	echo "$CERTpwd" > "$CERTbase.enc"
+	if [[ $? != 0 ]]
+	then
+		echo -e "\t\033[1m\033[5mcan not write password to file\033[0m"
+		exit_script 2
+	fi	
+	echo -e "\033[2mok\033[0m"
 fi
-echo -e "\033[2mok\033[0m"
 
 
 CERTstep=0
@@ -166,53 +173,46 @@ then #step 1 of 1
 	CERTstep=1
 	echo -e "\n\033[1m\033[4mSTEP 1/2 - certificate request generation\033[0m"
 
-	echo -e "check command line parameters"
-	for param in ${CERTparams2[@]}; do if [[ -z ${!param} ]]; then read "please define \"$param\" " ${param}; fi; done
+	echo -e "\033[2mcheck command line parameters\033[0m"
+	for param in ${CERTparams2[@]}; do while [[ -z ${!param} ]]; do read "please define \"$param\" " ${param}; done; done
 	echo -e "\nplease confirm command line parameters"
 	for param in ${CERTparams1[@]} ${CERTparams2[@]}; do printf "\t%-${ParamMaxLen}s = \"%-s\"\n" "$param" "${!param}"; done
 	read -p $'\ntype YES to continue ' toContinue
 	if [ "$toContinue" != "YES" ]; then exit_script 1; fi
 	echo -e "\033[2mok\033[0m"
 
-	if [ "$(ls -A .)" ]
-	then
-		echo -e "\t\033[1m\033[5mdirectory \"$CERTstore\" is not empty\033[0m"
-		exit_script 3
-	fi
-	echo -e "\t\033[2mdirectory \"$CERTstore\" is empty\033[0m"
+	echo -e "\033[2mcheck destination directory \"$CERTstore\"\033[0m"
+	if [ "$(ls -A .)" ]; then exit_script 11; fi
+	echo -e "\t\033[2mok\033[0m"
 
-	echo -e "\t\033[1mpassword saving to \"$CERTbase.enc\"\033[0m"
+	echo -e "\033[2msave encryption password to file \"$CERTbase.enc\"\033[0m"
 	echo "$CERTpwd" > "$CERTbase.enc"
-	if [[ $? != 0 ]]
-	then
-		echo -e "\t\033[1m\033[5mcan not write password to file\033[0m"
-		exit_script 3
-	fi	
+	if [[ $? != 0 ]]; then exit_script 2; fi	
 	echo -e "\033[2mok\033[0m"
 
-	echo -e "\ncreation and showing of certificate config file"
+	echo -e "\033[2mgenerate certificate config file \"$CERTbase.cfg\"\033[0m"
 	gen_FILEcfg "$CERTbase.cfg"
 	show_FILE "$CERTbase.cfg"
 	echo -e "\033[2mok\033[0m"
 
-	echo -e "\ncreate certificate request file"
+	echo -e "\033[2mgenerate certificate request file \"$CERTbase.csr\"\033[0m"
 	openssl req -new -nodes -config "$CERTbase.cfg" -keyout "$CERTbase.key" -out "$CERTbase.csr"
 	openssl rsa -aes256 -in "$CERTbase.key" -out "$CERTbase.key" -passout file:"$CERTbase.enc"
 	show_FILE "$CERTbase.csr"
-	show_FILE "$CERTbase.key"
 	echo -e "\033[2mok\033[0m"
 
-	exit_script 3
+	if (( "$CERTmode" != "SELF" )); then exit_script 3; fi
 fi
 
 
-if [[ "$CERTmode" != "CSR" || (($CERTstep == 0)) && -f "$CERTbase.csr" && ! -f "$CERTbase.cer" ]]
+if [[ "$CERTmode" == "EXT" || (($CERTstep == 0)) && -f "$CERTbase.csr" && ! -f "$CERTbase.cer" ]]
 then # STEP 2 of 2
+	CERTstep=2
 	echo -e "\n\033[1m\033[4mSTEP 2/2 - certificate stores generation\033[0m"
 
-	echo -e "\033[2mcheck for mode EXT - when all data provided by external service\033[0m"
 	if [[ "$CERTmode" == "EXT" ]]
 	then
+		echo -e "\033[2mcheck for mode EXT - when all data provided by external service\033[0m"
 		if [[ -f "$CERTbase.key" ]]
 		then
 			read -p $'\nEXT MODE but private key exists ! Would you overwrite .key file ?  [type YES to continue] ' toContinue
@@ -227,8 +227,8 @@ then # STEP 2 of 2
 			rm "$CERTbase.csr"
 		fi
 		echo -e "\t\033[2mcertificate request does not exist - ok for EXT mode\033[0m"
+		echo -e "\033[2mok\033[0m"
 	fi
-	echo -e "\033[2mok\033[0m"
 
 	echo -e "\nPlease paste here content of email(s) ond/or file(s) with cetificates including chain"
 	echo -e "For finish type \033[1m\033[5m...\033[0m in a new line and press ENTER\033[2m"
@@ -271,7 +271,7 @@ then # STEP 2 of 2
 	then
 		echo -e "\t\033[2mEXT mode: csr provided by external service\033[0m"
 		CSRdata="$(openssl req -in "$CERTbase.csr" -x509 -key "$CERTbase.key" -text -noout)"
-		for i in ${!CSRfields[@]}; do echo -e "\t\t\033[2m$(echo "$CSRdata" | grep "${CSRfields[$i]}" | awk '{$1=$1};1')\033[0m"; done
+		for i in ${!CERTfields[@]}; do echo -e "\t\t\033[2m$(echo "$CSRdata" | grep "${CERTfields[$i]}" | awk '{$1=$1};1')\033[0m"; done
 		echo -e "\t\033[2mEXT mode: private key provided by external service and encryped with provided password\033[0m"
 		openssl rsa -in "$CERTbase.key" -out "$CERTbase.key" -aes256 -passout file:"$CERTbase.enc"
 	fi
@@ -324,14 +324,27 @@ then # STEP 2 of 2
 	for e in cer chain pem; do echo -e "\t\033[2m\"$CERTbase.$e\"\033[0m"; done
 	echo -e "\033[2mok\033[0m"
 
-	echo -e "\033[2mchecking private key and certificate matching\033[0m"
+	echo -e "\033[2mcheck private key and certificate matching\033[0m"
 	HASHkey=$(openssl  rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -noout -modulus | openssl md5)
 	HASHcer=$(openssl x509 -in "$CERTbase.cer"                              -noout -modulus | openssl md5)
 	echo -e "\t\033[2mprivate key  hash is \"$HASHkey\"\033[0m"
 	echo -e "\t\033[2mcertificate  hash is \"$HASHcer\"\033[0m"
 	if [[ "$HASHkey" != "$HASHcer" ]]; then exit_script 6; fi
 	echo -e "\033[2mok\033[0m"
+elif [[ "$CERTmode" == "SELF" ]]
+then
+	CERTstep=2
+	echo -e "\033[2generate self signed certificate \"$CERTbase.enc\"\033[0m"
+	openssl x509 -req -in "$CERTbase.csr" -signkey "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.cer" -days $CERTdays
+	cp "$CERTbase.cer" "$CERTbase.pem"
+	CERTdata="$(openssl x509 -in "$CERTbase.cer" -text -noout)"
+	for i in ${!CERTfields[@]}; do echo -e "\t\t\033[2m$(echo "$CERTdata" | grep "${CERTfields[$i]}" | awk '{$1=$1};1')\033[0m"; done
+	echo -e "\033[2mok\033[0m"
+fi
 
+
+if (( $CERTstep == 2 ))
+then
 	echo -e "\033[2mcreating PKCS12 store\033[0m"
 	openssl rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.temp"
 	openssl pkcs12 -in "$CERTbase.pem" -inkey "$CERTbase.temp" -export -out "$CERTbase.pfx" -passout file:"$CERTbase.enc"
