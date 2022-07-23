@@ -113,6 +113,8 @@ exit_script() {
 			else echo -e "\t${EXITcodes[$i]}"
 		fi
 	done
+	chmod -R 400 ${CERTstore/ /\\ /}/*
+	chmod 500 ${CERTstore/ /\\ /}
 	cd $RUNpath
 	echo -e "\nbye"
 	exit $1
@@ -150,10 +152,14 @@ for store in STOREpath STOREname CERTfqdn; do mkdir -p "${!store}"; cd "${!store
 CERTstore="$(pwd)"
 CERTbase="$CERTstore/$CERTfqdn"
 echo -e "\t\033[2mcurrent directory now is \"$CERTbase\"\033[0m"
+chmod 755 ${CERTstore/ /\\ /}
+if [[ $? != 0 ]]; then exit_script 2; fi
+chmod -R 400 ${CERTstore/ /\\ /}/*
+if [[ $? != 0 ]]; then exit_script 2; fi
 echo -e "\033[2mok\033[0m"
 
 
-if [[ "$CERTmode" == "EXT" ]]
+if [[ "$CERTmode" == "EXT" && ! -f "$CERTbase.enc" ]]
 then
 	echo -e "\033[2mEXT mode\033[0m"
 	if [[ -z $CERTpwd ]]; then exit_script 9; fi
@@ -206,7 +212,7 @@ then #step 1 of 1
 fi
 
 
-if [[ "$CERTmode" == "EXT" || (($CERTstep == 0)) && -f "$CERTbase.csr" && ! -f "$CERTbase.cer" ]]
+if [[ ! -f "$CERTbase.cer" ]] && [[ "$CERTmode" == "EXT" || (($CERTstep == 0)) && -f "$CERTbase.csr" ]]
 then # STEP 2 of 2
 	CERTstep=2
 	echo -e "\n\033[1m\033[4mSTEP 2/2 - certificate stores generation\033[0m"
@@ -352,10 +358,13 @@ then
 	rm "$CERTbase.temp"
 	echo -e "\t\033[2m\"$CERTbase.pfx\" has been created\033[0m"
 	echo -e "\033[2mok\033[0m"
-
-	echo -e "\n\n\033[4mtarget directory \""$CERTstore"\" content\033[0m"
-	ls -lh "$CERTstore"
 fi
+
+
+echo -e "\n\n\033[4mtarget directory \""$CERTstore"\" content\033[0m"
+chmod -R 400 ${CERTstore/ /\\ /}/*
+chmod 500 ${CERTstore/ /\\ /}
+ls -lh "$CERTstore"
 
 
 echo -e "\033[2mok\033[0m"
