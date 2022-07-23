@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v05.02.01 23.07.2022
+# v05.02.02 23.07.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
@@ -359,6 +359,10 @@ then
 	echo -e "\t\033[2m\"$CERTbase.pfx\" has been created\033[0m"
 	echo -e "\033[2mok\033[0m"
 fi
+
+# from old script about jks for vCD generation
+# for %%a in (http consoleproxy) do %KEYTOOLcmd% -v -importkeystore -srckeystore "%DATApath%\%%~nc.pfx" -srcstoretype pkcs12 -srcstorepass %PASS% -srcalias 1 -destkeystore "%DATApath%\%%~nc.jks" -deststoretype JCEKS -deststorepass %PASS% -destkeypass %PASS% -destalias %%a
+# for /l %%n in (5,-1,1) do if exist %DATApath%\_ca%%n.cer %KEYTOOLcmd% -v -importcert -noprompt -trustcacerts -file %DATApath%\_ca%%n.cer -destkeystore "%DATApath%\%%~nc.jks" -deststoretype JCEKS -deststorepass %PASS% -destkeypass %PASS% -alias intermediate%%n
 
 
 echo -e "\n\n\033[4mtarget directory \""$CERTstore"\" content\033[0m"
