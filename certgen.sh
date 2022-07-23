@@ -286,13 +286,13 @@ then # STEP 2 of 2
 	do
 		for c1 in $(seq 1 ${CERTfile[0]})
 		do
-			if [[ "${CERTsubj[$c]}" == "${CERTissuer[$c1]}" ]]
+			if [[ "${CERTsubj[$c]}" == "${CERTissuer[$c1]}" && (($c != $c1)) ]]
 			then
 				CERTchild[$c]=$c1
 				CERTparent[$c1]=$c
 			fi
 		done
-		if [[ "${CERTsubj[$c]}" == "${CERTissuer[$c]}" ]]; then CERTroot=$c; fi
+		if [[ "${CERTsubj[$c]}" == "${CERTissuer[$c]}" ]]; then CERTroot=$c; CERTparent[$c]=$c; fi
 		if (( ${CERTchild[$c]} == 0 )); then CERTcert=$c; fi
 	done
 	for c in $(seq 1 ${CERTfile[0]}); do if (( ${CERTparent[$c]} * $CERTcert * $CERTroot == 0)); then exit_script 5; fi; done
