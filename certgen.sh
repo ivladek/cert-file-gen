@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v5.1 23.07.2022
+# v05.01.03 23.07.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
