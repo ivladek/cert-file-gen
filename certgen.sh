@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v5.0 22.07.2022
+# v5.1 23.07.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
@@ -93,7 +93,8 @@ show_FILE () {
 }
 
 exit_script() {
-	echo -e "\nusage: $(cd $(dirname "$0"); pwd; cd "$RUNpath")/$(basename "$0") [parameters]"
+	echo -e "\nusage: $RUNpath/$(basename "$0") [parameters]"
+	cd "$RUNpath"
 	echo -e "parameters:"
 	for param in ${CERTparams1[@]} ${CERTparams2[@]}; do printf "\t%-${ParamMaxLen}s = \033[2m\"%-s\"\033[0m\n" "$param" "${!param}"; done
 	echo -e "CERTmode:"
@@ -331,7 +332,7 @@ then # STEP 2 of 2
 	echo -e "\t\033[2mcertificate  hash is \"$HASHcer\"\033[0m"
 	if [[ "$HASHkey" != "$HASHcer" ]]; then exit_script 6; fi
 	echo -e "\033[2mok\033[0m"
-elif [[ "$CERTmode" == "SELF" ]]
+elif [[ "$CERTmode" == "SELF" && ! -f "$CERTbase.cer" ]]
 then
 	CERTstep=2
 	echo -e "\033[2generate self signed certificate \"$CERTbase.enc\"\033[0m"
@@ -343,7 +344,7 @@ then
 fi
 
 
-if (( $CERTstep == 2 ))
+if [[ (($CERTstep == 2)) && ! -f "$CERTbase.pfx" ]]
 then
 	echo -e "\033[2mcreating PKCS12 store\033[0m"
 	openssl rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.temp"
