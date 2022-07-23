@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v05.02.00 23.07.2022
+# v05.02.01 23.07.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
@@ -350,7 +350,7 @@ then
 fi
 
 
-if [[ (($CERTstep == 2)) && ! -f "$CERTbase.pfx" ]]
+if [[ -f "$CERTbase.pem" && ! -f "$CERTbase.pfx" ]]
 then
 	echo -e "\033[2mcreating PKCS12 store\033[0m"
 	openssl rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.temp"
