@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v05.01.03 23.07.2022
+# v05.02.00 23.07.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
@@ -154,7 +154,7 @@ CERTbase="$CERTstore/$CERTfqdn"
 echo -e "\t\033[2mcurrent directory now is \"$CERTbase\"\033[0m"
 chmod 755 ${CERTstore/ /\\ /}
 if [[ $? != 0 ]]; then exit_script 2; fi
-chmod -R 400 ${CERTstore/ /\\ /}/*
+chmod -R 664 ${CERTstore/ /\\ /}/*
 if [[ $? != 0 ]]; then exit_script 2; fi
 echo -e "\033[2mok\033[0m"
 
