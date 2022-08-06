@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# v05.02.02 23.07.2022
+# v05.03.00 06.08.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
-
-KEYlen=4096
-CERTdays=5000
 
 CERTparams1=(
 	CERTmode
@@ -20,6 +17,11 @@ CERTparams2=(
 	CERTlocality
 	CERTorg
 	CERTservice
+)
+
+CERTparams3=(
+	KEYlen
+	CERTdays
 )
 
 CERTfields=(
@@ -38,6 +40,8 @@ CERTparams_sample=(
 	"BiTime LLC"
 	"CloudInside Service Provider. Mail Server"
 	"mail.cloudinside.net"
+	"4096"
+	"5000"
 )
 
 EXITcodes=(
@@ -57,7 +61,7 @@ EXITcodes=(
 
 RUNpath=$(pwd)
 ParamMaxLen=0
-for param in ${CERTparams1[@]} ${CERTparams2[@]}; do (( ${#param} > $ParamMaxLen )) && ParamMaxLen=${#param}; done
+for param in ${CERTparams1[@]} ${CERTparams2[@]} ${CERTparams3[@]}; do (( ${#param} > $ParamMaxLen )) && ParamMaxLen=${#param}; done
 
 
 gen_FILEcfg () {
@@ -86,21 +90,22 @@ commonName = $CERTfqdn
 }
 
 show_FILE () {
-	echo -e "\n\033[2m\033[4m$1\033[0m\033[2m"
+	echo -e "\033[2m\033[4m$1\033[0m\033[2m"
 	cat "$1"
 	printf "^%.0s" {1..64}
-	echo -e "\033[0m\n"
+	echo -e "\033[0m"
 }
 
 exit_script() {
 	echo -e "\nusage: $RUNpath/$(basename "$0") [parameters]"
 	cd "$RUNpath"
 	echo -e "parameters:"
-	for param in ${CERTparams1[@]} ${CERTparams2[@]}; do printf "\t%-${ParamMaxLen}s = \033[2m\"%-s\"\033[0m\n" "$param" "${!param}"; done
+	for param in ${CERTparams1[@]} ${CERTparams2[@]} ${CERTparams3[@]}; do printf "\t%-${ParamMaxLen}s = \033[2m\"%-s\"\033[0m\n" "$param" "${!param}"; done
 	echo -e "CERTmode:"
 	echo -e "\tCSR: you provide data for request and post CSR to external CA"
 	echo -e "\t\treqired for STEP1: all above"
 	echo -e "\t\treqired for STEP2: ${CERTparams1[@]}"
+	echo -e "\t\toptional         : ${CERTparams3[@]}"
 	echo -e "\tEXT: external CA provides all data, including CSR and private key"
 	echo -e "\t\treqired: ${CERTparams1[@]} CERTpwd"
 	echo -e "\tSELF: self-signed sertificate"
@@ -125,7 +130,10 @@ echo -e "\n\n\033[1m\033[4mScript paramaters inittialisation\033[0m"
 
 
 echo -e "\033[2mparameters read from command line\t\033[0m"
-for param in "$@"; do
+KEYlen=4096
+CERTdays=5000
+for param in "$@"
+do
 	KeyName=$(echo $param | cut -f1 -d=)
 	KeyValuePos=${#KeyName}+1
 	KeyValue="${param:$KeyValuePos}"
@@ -154,8 +162,11 @@ CERTbase="$CERTstore/$CERTfqdn"
 echo -e "\t\033[2mcurrent directory now is \"$CERTbase\"\033[0m"
 chmod 755 ${CERTstore/ /\\ /}
 if [[ $? != 0 ]]; then exit_script 2; fi
-chmod -R 664 ${CERTstore/ /\\ /}/*
-if [[ $? != 0 ]]; then exit_script 2; fi
+if [ "$(ls -A ${CERTstore/ /\\ /})" ]
+then
+	chmod -R 664 ${CERTstore/ /\\ /}/*
+	if [[ $? != 0 ]]; then exit_script 2; fi
+fi
 echo -e "\033[2mok\033[0m"
 
 
@@ -182,27 +193,28 @@ then #step 1 of 1
 
 	echo -e "\033[2mcheck command line parameters\033[0m"
 	for param in ${CERTparams2[@]}; do while [[ -z ${!param} ]]; do read "please define \"$param\" " ${param}; done; done
-	echo -e "\nplease confirm command line parameters"
-	for param in ${CERTparams1[@]} ${CERTparams2[@]}; do printf "\t%-${ParamMaxLen}s = \"%-s\"\n" "$param" "${!param}"; done
+	echo -e "\033[2mok\033[0m"
+	echo -e "\nplease confirm certificate parameters"
+	for param in ${CERTparams1[@]} ${CERTparams2[@]} ${CERTparams3[@]}; do printf "\t%-${ParamMaxLen}s = \"%-s\"\n" "$param" "${!param}"; done
 	read -p $'\ntype YES to continue ' toContinue
 	if [ "$toContinue" != "YES" ]; then exit_script 1; fi
 	echo -e "\033[2mok\033[0m"
 
-	echo -e "\033[2mcheck destination directory \"$CERTstore\"\033[0m"
+	echo -e "\033[2m\ncheck destination directory \"$CERTstore\"\033[0m"
 	if [ "$(ls -A .)" ]; then exit_script 11; fi
-	echo -e "\t\033[2mok\033[0m"
+	echo -e "\033[2mok\033[0m"
 
-	echo -e "\033[2msave encryption password to file \"$CERTbase.enc\"\033[0m"
+	echo -e "\033[2m\nsave encryption password to file \"$CERTbase.enc\"\033[0m"
 	echo "$CERTpwd" > "$CERTbase.enc"
 	if [[ $? != 0 ]]; then exit_script 2; fi	
 	echo -e "\033[2mok\033[0m"
 
-	echo -e "\033[2mgenerate certificate config file \"$CERTbase.cfg\"\033[0m"
+	echo -e "\033[2m\ngenerate certificate config file\033[0m"
 	gen_FILEcfg "$CERTbase.cfg"
 	show_FILE "$CERTbase.cfg"
 	echo -e "\033[2mok\033[0m"
 
-	echo -e "\033[2mgenerate certificate request file \"$CERTbase.csr\"\033[0m"
+	echo -e "\033[2m\ngenerate certificate request file\033[0m"
 	openssl req -new -nodes -config "$CERTbase.cfg" -keyout "$CERTbase.key" -out "$CERTbase.csr"
 	openssl rsa -aes256 -in "$CERTbase.key" -out "$CERTbase.key" -passout file:"$CERTbase.enc"
 	show_FILE "$CERTbase.csr"
@@ -341,7 +353,7 @@ then # STEP 2 of 2
 elif [[ "$CERTmode" == "SELF" && ! -f "$CERTbase.cer" ]]
 then
 	CERTstep=2
-	echo -e "\033[2generate self signed certificate \"$CERTbase.enc\"\033[0m"
+	echo -e "\n\033[2mgenerate self signed certificate \"$CERTbase.enc\"\033[0m"
 	openssl x509 -req -in "$CERTbase.csr" -signkey "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.cer" -days $CERTdays
 	cp "$CERTbase.cer" "$CERTbase.pem"
 	CERTdata="$(openssl x509 -in "$CERTbase.cer" -text -noout)"
@@ -352,7 +364,7 @@ fi
 
 if [[ -f "$CERTbase.pem" && ! -f "$CERTbase.pfx" ]]
 then
-	echo -e "\033[2mcreating PKCS12 store\033[0m"
+	echo -e "\033[2m\ncreating PKCS12 store\033[0m"
 	openssl rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.temp"
 	openssl pkcs12 -in "$CERTbase.pem" -inkey "$CERTbase.temp" -export -out "$CERTbase.pfx" -passout file:"$CERTbase.enc"
 	rm "$CERTbase.temp"
