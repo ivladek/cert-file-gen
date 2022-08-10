@@ -24,4 +24,6 @@
 	CERTlocality="Almaty" \
 	CERTorg="BiTime LLC" \
 	CERTservice="CloudInside Service Provider, Test Server" \
-	CERTfqdn="test.cloudinside.net"
+	CERTfqdn="test.cloudinside.net" \
+	KEYlen="4096" \
+	CERTdays="5000"
