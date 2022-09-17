@@ -224,7 +224,7 @@ elif [[ "$CERTmode" == "SELF" ]]; then echo -e "\t\t\033[1m$CERTmode\033[0m\033[
 else exit_script 10; fi
 
 echo -e "\t\033[2mdirectory for certificate store\033[0m"
-CERTstore="${HOME}/${CERTstore#"~/"}"
+[[ "${CERTstore:0:1}" == "~" ]] && CERTstore="${HOME}/${CERTstore:1}"
 [[ ! -d "$CERTstore" ]] && mkdir -p "$CERTstore"
 [[ ! -d "$CERTstore" ]] && exit_script 2
 CERTstore="$(cd "$CERTstore"; pwd)"

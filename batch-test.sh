@@ -2,7 +2,7 @@
 
 ./certgen.sh \
 	CERTmode=CSR \
-	CERTstore="~/Documents/certs store" \
+	CERTstore="sample certs store" \
 	CERTpwd="P@ssword4_CSR-withSANs" \
 	CERTcountry="KZ" \
 	CERTlocality="Almaty" \
@@ -12,7 +12,7 @@
 
 ./certgen.sh \
 	CERTmode=CSR \
-	CERTstore="~/Documents/certs store" \
+	CERTstore="sample certs store" \
 	CERTpwd="P@ssword4_CSR-withouSANs" \
 	CERTcountry="KZ" \
 	CERTlocality="Almaty" \
@@ -22,13 +22,13 @@
 
 ./certgen.sh \
 	CERTmode=EXT \
-	CERTstore="~/Documents/certs store" \
+	CERTstore="sample certs store" \
 	CERTpwd="P@ssword4_EXT" \
 	CERTfqdn="portal.ivladek.com"
 
 ./certgen.sh \
 	CERTmode=SELF \
-	CERTstore="~/Documents/certs store" \
+	CERTstore="sample certs store" \
 	CERTpwd="P@ssword4_SELF-withSANs" \
 	CERTcountry="KZ" \
 	CERTlocality="Almaty" \
@@ -40,7 +40,7 @@
 
 ./certgen.sh \
 	CERTmode=SELF \
-	CERTstore="~/Documents/certs store" \
+	CERTstore="sample certs store" \
 	CERTpwd="P@ssword4_SELF-withoutSANs" \
 	CERTcountry="KZ" \
 	CERTlocality="Almaty" \
