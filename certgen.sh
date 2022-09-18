@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v06.06.00 17.09.2022
+# v06.10.00 18.09.2022
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
@@ -177,15 +177,15 @@ exit_script() {
 
 # certificate store lock in
 CertStore_lockin() {
-	find "$CERTstore" -type f -exec chmod 400 {} +	
-	find "$CERTstore" -type d -exec chmod 500 {} +
+	chmod 400 "$CERTbase/*"
+	chmod 500 "$CERTstore"
 	echo -e "\033[2mcertificates store is locked in\033[0m"
 }
 
 # certificate store lock out
 CertStore_lockout() {
-	find "$CERTstore" -type d -exec chmod 750 {} +
-	find "$CERTstore" -type f -exec chmod 640 {} +	
+	chmod 750 "$CERTstore"
+	chmod 640 "$CERTbase/*"
 	echo -e "\t\033[2mcertificates store is locked out\033[0m"
 }
 
@@ -238,7 +238,7 @@ if [[ $(ls "$CERTpath") ]]
 then
 	echo -e "\t\t\033[2mtarget directory is not empty\033[0m"
 	echo -e -n "\t\033[2mtype \033[0mDELETE\033[2m to delete all content \033[0m"
-	read toContinue
+	read -n6 -t10 toContinue
 	if [[ "$toContinue" == "DELETE" ]]
 	then
 		rm -rf "$CERTpath"
@@ -264,9 +264,9 @@ then #step 1 of 1
 		printf "\t\t\033[2m%-${ParamMaxLen}s = \"%-s\"\033[0m\n" "$param" "${!param}"
 		[[ "$param" == "CERTfqdn" ]] && for san in ${CERTsan[@]:1}; do printf "\t\t\033[2m%-${ParamMaxLen}s   \"%-s\"\033[0m\n" " " "$san"; done
 	done
-	echo -e -n "\t\033[2mtype \033[1mYES\033[0m\033[2m to continue \033[0m"
-	read toContinue
-	[[ "$toContinue" != "YES" ]] && exit_script 1
+	echo -e -n "\t\033[2mpress \033[1mENTER\033[0m\033[2m to continue or any other stop\033[0m"
+	read -n1 -t5 toContinue
+	[[ "$toContinue" ]] && exit_script 1
 
 	echo -e "\t\033[2mgenerate certificate config file\033[0m"
 	gen_FILEcfg
@@ -395,14 +395,12 @@ else # SELF
 	CERTdata="$(openssl x509 -in "$CERTbase.cer" -text -noout)"
 	for i in ${!CERTfields[@]}; do echo -e "\t\t\033[2m$(echo "$CERTdata" | grep "${CERTfields[$i]}" | awk '{$1=$1};1')\033[0m"; done
 fi
-if [[ -f "$CERTbase.pem" && ! -f "$CERTbase.pfx" ]]
-then
-	echo -e "\t\033[2mcreating PKCS12 store\033[0m"
-	openssl rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.temp"
-	openssl pkcs12 -in "$CERTbase.pem" -inkey "$CERTbase.temp" -export -out "$CERTbase.pfx" -passout file:"$CERTbase.enc"
-	rm "$CERTbase.temp"
-	echo -e "\t\t\033[2m\"$CERTbase.pfx\" has been created\033[0m"
-fi
+
+echo -e "\t\033[2mcreating PKCS12 store\033[0m"
+openssl rsa -in "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.temp"
+openssl pkcs12 -in "$CERTbase.pem" -inkey "$CERTbase.temp" -export -out "$CERTbase.pfx" -passout file:"$CERTbase.enc"
+rm "$CERTbase.temp"
+echo -e "\t\t\033[2m\"$CERTbase.pfx\" has been created\033[0m"
 echo -e "\033[2mok\033[0m"
 
 
