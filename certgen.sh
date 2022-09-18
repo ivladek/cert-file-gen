@@ -266,9 +266,10 @@ then #step 1 of 1
 		[[ "$param" == "CERTfqdn" ]] && for san in ${CERTsan[@]:1}; do printf "\t\t\033[2m%-${ParamMaxLen}s   \"%-s\"\033[0m\n" " " "$san"; done
 	done
 	echo -e -n "\t\033[2mpress \033[1mENTER\033[0m\033[2m to continue or any other stop\033[0m"
+	toContinue=""
 	read -n1 -t5 toContinue
 	echo ""
-	[[ "$toContinue" ]] || exit_script 1
+	[[ "$toContinue" != "" ]] && exit_script 1
 
 	echo -e "\t\033[2mgenerate certificate config file\033[0m"
 	gen_FILEcfg
@@ -392,7 +393,7 @@ then # STEP 2 of 2
 	[[ "$HASHkey" != "$HASHcer" ]] && exit_script 6
 else # SELF
 	echo -e "\t\033[2mgenerate self signed certificate \"$CERTbase.enc\"\033[0m"
-	openssl x509 -req -in "$CERTbase.csr" -extfile "$CERTbase.ext" -signkey "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.cer" -days $CERTdays
+	openssl x509 -req -sha512 -days $CERTdays -in "$CERTbase.csr" -extfile "$CERTbase.ext" -signkey "$CERTbase.key" -passin file:"$CERTbase.enc" -out "$CERTbase.cer"
 	cp "$CERTbase.cer" "$CERTbase.pem"
 	CERTdata="$(openssl x509 -in "$CERTbase.cer" -text -noout)"
 	for i in ${!CERTfields[@]}; do echo -e "\t\t\033[2m$(echo "$CERTdata" | grep "${CERTfields[$i]}" | awk '{$1=$1};1')\033[0m"; done
