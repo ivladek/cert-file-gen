@@ -3,4 +3,4 @@
 Tool to simplify certificate store creation
 
 certgen.sh - main script
-certgen-batch.sh - calls main script for each of your certificate
+batch-test.sh - sample scitp for batch processing
