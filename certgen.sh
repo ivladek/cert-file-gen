@@ -267,6 +267,7 @@ then #step 1 of 1
 	done
 	echo -e -n "\t\033[2mpress \033[1mENTER\033[0m\033[2m to continue or any other stop\033[0m"
 	read -n1 -t5 toContinue
+	echo ""
 	[[ "$toContinue" ]] || exit_script 1
 
 	echo -e "\t\033[2mgenerate certificate config file\033[0m"
