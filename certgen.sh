@@ -177,15 +177,15 @@ exit_script() {
 
 # certificate store lock in
 CertStore_lockin() {
-	chmod 400 "$CERTbase/*"
-	chmod 500 "$CERTstore"
+	find "$CERTpath" -type f -exec chmod 400 {} + 
+	chmod 500 "$CERTpath"
 	echo -e "\033[2mcertificates store is locked in\033[0m"
 }
 
 # certificate store lock out
 CertStore_lockout() {
-	chmod 750 "$CERTstore"
-	chmod 640 "$CERTbase/*"
+	chmod 750 "$CERTpath"
+	find "$CERTpath" -type f -exec chmod 640 {} + 
 	echo -e "\t\033[2mcertificates store is locked out\033[0m"
 }
 
@@ -239,6 +239,7 @@ then
 	echo -e "\t\t\033[2mtarget directory is not empty\033[0m"
 	echo -e -n "\t\033[2mtype \033[0mDELETE\033[2m to delete all content \033[0m"
 	read -n6 -t10 toContinue
+	echo ""
 	if [[ "$toContinue" == "DELETE" ]]
 	then
 		rm -rf "$CERTpath"
@@ -266,7 +267,7 @@ then #step 1 of 1
 	done
 	echo -e -n "\t\033[2mpress \033[1mENTER\033[0m\033[2m to continue or any other stop\033[0m"
 	read -n1 -t5 toContinue
-	[[ "$toContinue" ]] && exit_script 1
+	[[ "$toContinue" ]] || exit_script 1
 
 	echo -e "\t\033[2mgenerate certificate config file\033[0m"
 	gen_FILEcfg
@@ -310,7 +311,7 @@ then # STEP 2 of 2
 		fi
 		$WRITEcer && echo "$l" >> "${CERTfile[${CERTfile[0]}]}"
 		[[ "$l" == "-----END CERTIFICATE-----" ]] && WRITEcer=false
-		read -r l
+		read -s -r l
 	done
 
 	echo -e "\t\033[2mcertificates count is ${CERTfile[0]}\033[0m"
