@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v06.10.00 18.09.2022
+# v06.20.00 14.01.2023
 # Script to generate certificate request and pack results to common formats
 # usage without any restrictions
 # created by Vladislav Kirilin, ivladek@me.com
@@ -214,6 +214,10 @@ echo -e "\t\033[2mdetect primary fqdn and SANs\033[0m"
 CERTsan=()
 for san in $(echo "${CERTfqdn//,/ }"); do CERTsan+=("$san"); done
 CERTfqdn=${CERTsan[0]}
+CERThost=${CERTfqdn%%.*}
+CERTzone=${CERTfqdn#*.}
+[[ "$CERThost" == "*" ]] && CERThost="wildcard"
+CERTname="${CERThost}.${CERTzone}"
 echo -e "\t\t$CERTfqdn"
 for san in ${CERTsan[@]:1}; do echo -e "\t\t\033[2m${san}\033[0m"; done
 echo -e "\t\033[2mdetect script mode\033[0m"
@@ -228,8 +232,8 @@ echo -e "\t\033[2mdirectory for certificate store\033[0m"
 [[ ! -d "$CERTstore" ]] && mkdir -p "$CERTstore"
 [[ ! -d "$CERTstore" ]] && exit_script 2
 CERTstore="$(cd "$CERTstore"; pwd)"
-CERTpath="$CERTstore/$CERTfqdn"
-CERTbase="$CERTpath/$CERTfqdn"
+CERTpath="$CERTstore/$CERTname"
+CERTbase="$CERTpath/$CERTname"
 echo -e "\t\t\033[2m\"$CERTpath\"\033[0m"
 [[ -d "$CERTstore" ]]  && CertStore_lockout
 [[ ! -d "$CERTpath" ]] && mkdir -p "$CERTpath"
