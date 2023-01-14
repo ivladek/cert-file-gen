@@ -41,11 +41,11 @@
 ./certgen.sh \
 	CERTmode=SELF \
 	CERTstore="sample certs store" \
-	CERTpwd="P@ssword4_SELF-withoutSANs" \
+	CERTpwd="P@ssword4_SELF-wildcard" \
 	CERTcountry="KZ" \
 	CERTlocality="Almaty" \
 	CERTorg="BiTime LLC" \
-	CERTservice="Testing Corp. Mail Server" \
-	CERTfqdn="report.ivladek.com" \
+	CERTservice="Testing Corp" \
+	CERTfqdn="*.ivladek.com" \
 	KEYlen="4096" \
 	CERTdays="5000"
